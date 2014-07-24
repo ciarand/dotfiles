@@ -1,0 +1,21 @@
+---
+- name: copy source files into ~/.dotfiles
+  copy: src=dotfiles dest=~/.dotfiles state=directory
+
+- name: symlink files from ~/.dotfiles to ~
+  file: src=~/.dotfiles/{{ item.src }} dest=~/{{ item.dest }} state=link
+  with_items:
+    - {src: 'git/config',        dest: '.gitconfig'}
+    - {src: 'git/config.local',  dest: '.gitconfig.local'}
+    - {src: 'git/gitignore',     dest: '.gitignore'}
+    - {src: 'inputrc',           dest: '.inputrc'}
+    - {src: 'bash_profile',      dest: '.bash_profile'}
+    - {src: "vimrc",             dest: '.vimrc'}
+    - {src: 'tmux.conf',         dest: '.tmux.conf'}
+    - {src: 'tmux-osx.conf',     dest: '.tmux-osx.conf'}
+    - {src: 'xmodmap',           dest: '.Xmodmap'}
+    - {src: 'bin',               dest: 'bin'}
+    - {src: 'php',               dest: '.composer'}
+    - {src: 'bash.d',            dest: '.bash.d'}
+    - {src: 'hydra',             dest: '.hydra'}
+
