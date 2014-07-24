@@ -1,8 +1,6 @@
 Dotfiles
 ========
-
-[quote]
-A role for installing and managing my dotfiles
+>A role for installing and managing my dotfiles
 
 Requirements
 ------------
