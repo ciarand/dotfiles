@@ -11,3 +11,4 @@ galaxy_info:
   - name: GenericBSD
     versions:
     - any
+  categories: []
