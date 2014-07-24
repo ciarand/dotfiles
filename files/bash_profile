@@ -1,0 +1,473 @@
+#!/usr/bin/env bash
+
+export EDITOR="vim"
+export GIT_EDITOR=$EDITOR
+
+set -o vi
+
+# reset the path
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# source etc/profile if it exists
+[[ -f /etc/profile ]] && source /etc/profile
+
+# Aliases ------------------------------------------------------------------{{{
+
+alias vim=/usr/local/Cellar/macvim/HEAD/MacVim.app/Contents/MacOS/Vim
+alias ls="ls -lahG"
+alias psg="ps aux | grep -v grep | grep -i -e VSZ -e"
+alias mkdir="mkdir -pv"
+alias j="jump"
+alias e="$EDITOR"
+
+# some tmux ones
+alias clr="clear && tmux clear-history"
+alias tl="tmux ls"
+alias ta="tmux attach-session -t"
+alias t="tmux new-session -s"
+
+# }}}
+
+# Completion stuff ----------------------------------------------------------{{{
+
+[[ -f /etc/bash_completion ]] && source /etc/bash_completion
+
+# }}}
+
+# OS specific stuff ---------------------------------------------------------{{{
+
+if [[ $(uname) -eq "Darwin" ]]; then
+    if hash brew 2>/dev/null; then
+        BREW_COMPLETION="$(brew --prefix)/etc/bash_completion"
+
+        [[ -f $BREW_COMPLETION ]] && source $BREW_COMPLETION
+    fi
+fi
+
+# }}}
+
+# Go related stuff ----------------------------------------------------------{{{
+
+export GOPATH=$HOME/code/go
+export PATH=$HOME/src/go/bin:$GOPATH/bin:$PATH
+
+hash go 2>/dev/null && export GOROOT="$(go env GOROOT)"
+
+# }}}
+
+# Git related stuff --------------------------------------------------------{{{
+
+# use gh instead of git
+hash gh 2>/dev/null && eval "$(gh alias -s)"
+
+# }}}
+
+# Ruby related stuff --------------------------------------------------------{{{
+
+export PATH="$HOME/.rbenv/bin:$PATH"
+
+# only init rbenv if it exists (duh)
+hash rbenv 2>/dev/null && eval "$(rbenv init -)"
+
+# }}}
+
+# Lua related stuff ---------------------------------------------------------{{{
+
+hash luarocks 2>/dev/null && eval "$(luarocks path)"
+
+# }}}
+
+# Perl related stuff --------------------------------------------------------{{{
+
+PATH="$HOME/.plenv/bin:$PATH"
+
+hash plenv 2>/dev/null && eval "$(plenv init -)"
+
+# }}}
+
+# PHP related stuff --------------------------------------------------------{{{
+
+# load the bashrc file if it exists
+[[ -f ~/.phpbrew/bashrc ]] && source ~/.phpbrew/bashrc
+
+# make sure we have the bin in path for composer n stuff
+PATH="$HOME/.phpbrew/.phpbrew/bin:$PATH"
+
+# }}}
+# Color functions -----------------------------------------------------------{{{
+
+function __ {
+  echo "$@"
+}
+
+function __make_ansi {
+  next=$1 && shift
+  echo "\[\e[$(__$next $@)m\]"
+}
+
+function __make_echo {
+  next=$1 && shift
+  echo "\033[$(__$next $@)m"
+}
+
+
+function __reset {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "0${out:+;${out}}"
+}
+
+function __bold {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}1"
+}
+
+function __faint {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}2"
+}
+
+function __italic {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}3"
+}
+
+function __underline {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}4"
+}
+
+function __negative {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}7"
+}
+
+function __crossed {
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "${out:+${out};}8"
+}
+
+
+function __color_normal_fg {
+  echo "3$1"
+}
+
+function __color_normal_bg {
+  echo "4$1"
+}
+
+function __color_bright_fg {
+  echo "9$1"
+}
+
+function __color_bright_bg {
+  echo "10$1"
+}
+
+
+function __color_black   {
+  echo "0"
+}
+
+function __color_red   {
+  echo "1"
+}
+
+function __color_green   {
+  echo "2"
+}
+
+function __color_yellow  {
+  echo "3"
+}
+
+function __color_blue  {
+  echo "4"
+}
+
+function __color_magenta {
+  echo "5"
+}
+
+function __color_cyan  {
+  echo "6"
+}
+
+function __color_white   {
+  echo "7"
+}
+
+function __color_rgb {
+  r=$1 && g=$2 && b=$3
+  [[ r == g && g == b ]] && echo $(( $r / 11 + 232 )) && return # gray range above 232
+  echo "8;5;$(( ($r * 36  + $b * 6 + $g) / 51 + 16 ))"
+}
+
+function __color {
+  color=$1 && shift
+  case "$1" in
+    fg|bg) side="$1" && shift ;;
+    *) side=fg;;
+  esac
+  case "$1" in
+    normal|bright) mode="$1" && shift;;
+    *) mode=normal;;
+  esac
+  [[ $color == "rgb" ]] && rgb="$1 $2 $3" && shift 3
+
+  next=$1 && shift
+  out="$(__$next $@)"
+  echo "$(__color_${mode}_${side} $(__color_${color} $rgb))${out:+;${out}}"
+}
+
+
+function __black   {
+  echo "$(__color black $@)"
+}
+
+function __red   {
+  echo "$(__color red $@)"
+}
+
+function __green   {
+  echo "$(__color green $@)"
+}
+
+function __yellow  {
+  echo "$(__color yellow $@)"
+}
+
+function __blue  {
+  echo "$(__color blue $@)"
+}
+
+function __magenta {
+  echo "$(__color magenta $@)"
+}
+
+function __cyan  {
+  echo "$(__color cyan $@)"
+}
+
+function __white   {
+  echo "$(__color white $@)"
+}
+
+function __rgb {
+  echo "$(__color rgb $@)"
+}
+
+
+function __color_parse {
+  next=$1 && shift
+  echo "$(__$next $@)"
+}
+
+function color {
+  echo "$(__color_parse make_ansi $@)"
+}
+
+function echo_color {
+  echo "$(__color_parse make_echo $@)"
+}
+
+
+black="$(color reset black)"
+red="$(color reset red)"
+green="$(color reset green)"
+yellow="$(color reset yellow)"
+blue="$(color reset blue)"
+purple="$(color reset magenta)"
+cyan="$(color reset cyan)"
+white="$(color reset white bold)"
+orange="$(color reset red fg bright)"
+
+bold_black="$(color black bold)"
+bold_red="$(color red bold)"
+bold_green="$(color green bold)"
+bold_yellow="$(color yellow bold)"
+bold_blue="$(color blue bold)"
+bold_purple="$(color magenta bold)"
+bold_cyan="$(color cyan bold)"
+bold_white="$(color white bold)"
+bold_orange="$(color red fg bright bold)"
+
+underline_black="$(color black underline)"
+underline_red="$(color red underline)"
+underline_green="$(color green underline)"
+underline_yellow="$(color yellow underline)"
+underline_blue="$(color blue underline)"
+underline_purple="$(color magenta underline)"
+underline_cyan="$(color cyan underline)"
+underline_white="$(color white underline)"
+underline_orange="$(color red fg bright underline)"
+
+background_black="$(color black bg)"
+background_red="$(color red bg)"
+background_green="$(color green bg)"
+background_yellow="$(color yellow bg)"
+background_blue="$(color blue bg)"
+background_purple="$(color magenta bg)"
+background_cyan="$(color cyan bg)"
+background_white="$(color white bg bold)"
+background_orange="$(color red bg bright)"
+
+normal="$(color reset)"
+reset_color="$(__make_ansi '' 39)"
+
+# These colors are meant to be used with `echo -e`
+echo_black="$(echo_color reset black)"
+echo_red="$(echo_color reset red)"
+echo_green="$(echo_color reset green)"
+echo_yellow="$(echo_color reset yellow)"
+echo_blue="$(echo_color reset blue)"
+echo_purple="$(echo_color reset magenta)"
+echo_cyan="$(echo_color reset cyan)"
+echo_white="$(echo_color reset white bold)"
+echo_orange="$(echo_color reset red fg bright)"
+
+echo_bold_black="$(echo_color black bold)"
+echo_bold_red="$(echo_color red bold)"
+echo_bold_green="$(echo_color green bold)"
+echo_bold_yellow="$(echo_color yellow bold)"
+echo_bold_blue="$(echo_color blue bold)"
+echo_bold_purple="$(echo_color magenta bold)"
+echo_bold_cyan="$(echo_color cyan bold)"
+echo_bold_white="$(echo_color white bold)"
+echo_bold_orange="$(echo_color red fg bright bold)"
+
+echo_underline_black="$(echo_color black underline)"
+echo_underline_red="$(echo_color red underline)"
+echo_underline_green="$(echo_color green underline)"
+echo_underline_yellow="$(echo_color yellow underline)"
+echo_underline_blue="$(echo_color blue underline)"
+echo_underline_purple="$(echo_color magenta underline)"
+echo_underline_cyan="$(echo_color cyan underline)"
+echo_underline_white="$(echo_color white underline)"
+echo_underline_orange="$(echo_color red fg bright underline)"
+
+echo_background_black="$(echo_color black bg)"
+echo_background_red="$(echo_color red bg)"
+echo_background_green="$(echo_color green bg)"
+echo_background_yellow="$(echo_color yellow bg)"
+echo_background_blue="$(echo_color blue bg)"
+echo_background_purple="$(echo_color magenta bg)"
+echo_background_cyan="$(echo_color cyan bg)"
+echo_background_white="$(echo_color white bg bold)"
+echo_background_orange="$(echo_color red bg bright)"
+
+echo_normal="$(echo_color reset)"
+echo_reset_color="$(__make_echo '' 39)"
+
+# }}}
+
+# Fancy prompt --------------------------------------------------------------{{{
+
+function _git_prompt() {
+    # check if we're in a git repo
+    command git rev-parse --is-inside-work-tree &>/dev/null || return
+
+    local git_branch_character="♆"
+    #local git_status="(`git status -unormal 2>&1`)"
+    local git_branch="(`git rev-parse --abbrev-ref HEAD 2>/dev/null`)"
+    local git_hash="`git rev-parse --short=4 HEAD 2>/dev/null`"
+
+    command git diff --quiet --ignore-submodules HEAD &>/dev/null
+
+    if [ $? -eq 1 ]; then
+        local git_dirty_hash="${red}${git_hash}${normal}"
+    else
+        local git_dirty_hash="${green}${git_hash}${normal}"
+    fi
+
+    echo "${red}${git_branch_character}${normal} ${git_branch} ${git_dirty_hash} "
+}
+
+function _prompt_cwd {
+    pwd
+}
+
+function _prompt_variable {
+    local char="λ"
+
+    if [ $1 -ne 0 ]; then
+        local color="${red}";
+    else
+        local color="${blue}";
+    fi
+
+    echo "${color}${char}${normal}"
+}
+
+function _prompt_command() {
+    local LAST_STATUS=$?
+
+    local prompt_var=`_prompt_variable $LAST_STATUS`
+    local git_prompt=`_git_prompt`
+
+    if test -z "$git_prompt"; then
+        PS1="[\w] ${prompt_var} "
+    else
+        PS1="[\w] ${git_prompt}\n${prompt_var} "
+    fi
+}
+
+PROMPT_COMMAND=_prompt_command
+
+# }}}
+
+# Mark related functions ----------------------------------------------------{{{
+
+export MARKPATH=$HOME/.marks
+
+# make it if it doesn't exist
+[[ -d "$MARKPATH" ]] || mkdir "$MARKPATH"
+
+function jump {
+    cd -P "$MARKPATH/$1" 2>/dev/null || echo "No such mark: $1"
+}
+
+function mark {
+    mkdir -p "$MARKPATH"; ln -s "$(pwd)" "$MARKPATH/$1"
+}
+
+function unmark {
+    rm -i "$MARKPATH/$1"
+}
+
+function marks {
+    ls -l "$MARKPATH" \
+        | tail -n +2 \
+        | sed 's/  / /g' \
+        | cut -d' ' -f9- \
+        | awk -F ' -> ' '{printf "%-10s -> %s\n", $1, $2}'
+}
+
+_completemarks() {
+  local curw="${COMP_WORDS[COMP_CWORD]}"
+  local wordlist="$(find $MARKPATH -type l -exec basename {} ';')"
+
+  COMPREPLY=($(compgen -W '${wordlist[@]}' -- "$curw"))
+  return 0
+}
+
+complete -F _completemarks jump unmark
+
+# }}}
+
+# Finishing ---------------------------------------------------{{{
+
+# export the finalized path
+export PATH=~/bin:~/managed-bin:$PATH
+
+# source the local file if it exists
+[ -f ~/.bash_profile.local ] && source ~/.bash_profile.local
+
+# }}}
+
