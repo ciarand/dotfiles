@@ -1,9 +1,12 @@
 ---
 - name: copy source files into ~/.dotfiles
-  copy: src=dotfiles dest=~/.dotfiles state=directory
+  copy: src=dotfiles/ dest=~/.dotfiles
 
 - name: symlink files from ~/.dotfiles to ~
-  file: src=~/.dotfiles/{{ item.src }} dest=~/{{ item.dest }} state=link
+  file: >
+    src="~/.dotfiles/{{ item.src }}"
+    dest="~/{{ item.dest }}"
+    state="link"
   with_items:
     - {src: 'git/config',        dest: '.gitconfig'}
     - {src: 'git/config.local',  dest: '.gitconfig.local'}
@@ -16,6 +19,5 @@
     - {src: 'xmodmap',           dest: '.Xmodmap'}
     - {src: 'bin',               dest: 'bin'}
     - {src: 'php',               dest: '.composer'}
-    - {src: 'bash.d',            dest: '.bash.d'}
     - {src: 'hydra',             dest: '.hydra'}
 
