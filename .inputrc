@@ -15,9 +15,10 @@ set completion-ignore-case on
 "\eOP": beginning-of-line
 "\eOQ": end-of-line
 
-set completion-ignore-case On
+set completion-ignore-case on
 set bell-style none
 set editing-mode vi
+set keyseq-timeout 150
 
 $if mode=vi
     set keymap vi-command

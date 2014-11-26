@@ -17,32 +17,31 @@ call vundle#begin()
 
 Plugin 'gmarik/Vundle.vim'
 
-" tools
-Plugin 'Shougo/unite.vim'
-Plugin 'Shougo/vimproc'
-Plugin 'm2mdas/phpcomplete-extended'
-Plugin 'benmills/vimux'
-Plugin 'godlygeek/tabular'
-Plugin 'scrooloose/syntastic'
-Plugin 'tpope/vim-dispatch'
-Plugin 'tpope/vim-fugitive'
-Plugin 'tpope/vim-vinegar'
-Plugin 'christoomey/vim-tmux-navigator'
-Plugin 'editorconfig/editorconfig-vim'
-
-" ui
-Plugin 'bling/vim-airline'
-Plugin 'edkolev/tmuxline.vim'
-Plugin 'mhinz/vim-signify'
-
-" syntaxes
-Plugin 'fatih/vim-go'
-Plugin 'derekwyatt/vim-scala'
-Plugin 'evanmiller/nginx-vim-syntax'
-Plugin 'lepture/vim-jinja'
-Plugin 'xsbeats/vim-blade'
-Plugin 'cbracken/vala.vim'
-Plugin 'chase/vim-ansible-yaml'
+Plugin 'Rip-Rip/clang_complete'         " better support for c-langs
+Plugin 'Valloric/YouCompleteMe'         " autocompletion
+Plugin 'benmills/vimux'                 " same as above but to a dedicated pane
+Plugin 'cbracken/vala.vim'              " vala syntax
+Plugin 'chase/vim-ansible-yaml'         " ansible-specific yml syntax
+Plugin 'chriskempson/base16-vim'        " cool color schemes
+Plugin 'christoomey/vim-tmux-navigator' " navigate tmux / vim panes easily
+Plugin 'editorconfig/editorconfig-vim'  " editorconfig support
+Plugin 'edkolev/promptline.vim'         " cool status bar for bash
+Plugin 'edkolev/tmuxline.vim'           " cool status bar for tmux
+Plugin 'evanmiller/nginx-vim-syntax'    " nginx syntax
+Plugin 'fatih/vim-go'                   " awesome support for go
+Plugin 'godlygeek/tabular'              " aligns things
+Plugin 'itchyny/lightline.vim'          " cool status bar at bottom
+Plugin 'wting/rust.vim'                 " rust support (inc. syntastic checker)
+Plugin 'elixir-lang/vim-elixir'         " Elixir support
+Plugin 'sheerun/vim-polyglot'           " language pack for a bunch of stuff
+Plugin 'openscad.vim'                   " openSCAD support
+Plugin 'airblade/vim-gitgutter'         " signs in the gutter
+Plugin 'scrooloose/syntastic'           " runs linters n stuff
+Plugin 'tpope/vim-dispatch'             " dispatch tasks to other tmux panes
+Plugin 'tpope/vim-fugitive'             " git wrapper
+Plugin 'tpope/vim-sensible'             " sensible defaults
+Plugin 'tpope/vim-vinegar'              " helpers for netrw explorer
+Plugin 'xsbeats/vim-blade'              " blade syntax
 
 call vundle#end()
 
@@ -62,14 +61,15 @@ set visualbell
 set ttyfast
 set ruler
 set backspace=indent,eol,start
+set fileformats=unix
 set number
 set norelativenumber
 set laststatus=2
 set history=1000
 set undofile
 set undoreload=10000
+set listchars=tab:▸\ ,extends:❯,precedes:❮,trail:•,nbsp:⚛
 set list
-set listchars=tab:▸\ ,extends:❯,precedes:❮
 set lazyredraw
 set matchtime=3
 set splitbelow
@@ -109,10 +109,11 @@ set backupskip=/tmp/*,/private/tmp/*"
 set complete=.,w,b,u,t
 set completeopt=longest,menuone,preview
 
+" stops showing trailing space in insert mode
 augroup trailing
     au!
-    au InsertEnter * :set listchars-=trail:⌴
-    au InsertLeave * :set listchars+=trail:⌴
+    au InsertEnter * :set listchars-=trail:•
+    au InsertLeave * :set listchars+=trail:•
 augroup END
 
 " }}}
@@ -132,7 +133,6 @@ set wildignore+=*.DS_Store                       " OSX bullshit
 
 set wildignore+=*.luac                           " Lua byte code
 
-set wildignore+=migrations                       " Django migrations
 set wildignore+=*.pyc                            " Python byte code
 
 set wildignore+=*.orig                           " Merge resolution files
@@ -285,8 +285,8 @@ let g:syntastic_check_on_open            = 1
 let g:syntastic_debug_file               = '~/.syntastic.log'
 let g:syntastic_always_populate_loc_list = 1
 
-let g:ycm_auto_trigger = 0
-let g:ycm_autoclose_preview_window_after_insertion = 0
+let g:ycm_auto_trigger = 1
+let g:ycm_seed_identifiers_with_syntax = 1
 
 let g:netrw_cursor          = 0
 let b:netrw_lastfile        = 1
@@ -311,32 +311,30 @@ endif
 
 nnoremap <silent> <leader>t :call VimuxRunLastCommand()<CR>
 
-let g:unite_source_rec_async_command = 'ag --follow --nocolor --nogroup --hidden -g ""'
-
-nnoremap <silent> <leader>p :Unite file_rec/async -start-insert <CR>
-
 " }}}
 
 " Languages --------------------------------------------------------------- {{{
 
 " For all text files set 'textwidth' to 78 characters.
-autocmd FileType text setlocal textwidth=78
 autocmd BufRead,BufNewFile *.md set filetype=markdown
+autocmd BufRead,BufNewFile *.adoc set filetype=asciidoc
 
 autocmd BufNewFile,BufRead *.json set filetype=javascript
 
 autocmd BufNewFile,BufReadPost *.coffee setl shiftwidth=2 expandtab
 autocmd BufNewFile,BufReadPost *.yml,*.yaml setl shiftwidth=2 expandtab
 
-" use the phpcomplete completer in php files
-" autocmd FileType php setlocal omnifunc=phpcomplete_extended#CompletePHP
-let g:phpcomplete_index_composer_command = "composer"
+autocmd FileType text setlocal textwidth=78
 
 " don't make stupid spelling mistakes in commit messages
 au BufNewFile,BufRead COMMIT_EDITMSG set spell
 
 " Treat <li> and <p> tags like the block tags they are
 let g:html_indent_tags = 'li\|p'
+
+let g:go_fmt_fail_silently = 0
+let g:go_fmt_command = "goimports"
+let g:syntastic_go_checkers = ['gofmt', 'go', 'govet', 'gotype', 'golint']
 
 " Syntax highlighting
 if (&t_Co > 2 || has("gui_running")) && !exists("syntax_on")
@@ -354,148 +352,123 @@ autocmd BufReadPost *
 
 " }}}
 
-" Nyan! {{{
-
-function! NyanMe() " {{{
-    hi NyanFur             guifg=#BBBBBB
-    hi NyanPoptartEdge     guifg=#ffd0ac
-    hi NyanPoptartFrosting guifg=#fd3699 guibg=#fe98ff
-    hi NyanRainbow1        guifg=#6831f8
-    hi NyanRainbow2        guifg=#0099fc
-    hi NyanRainbow3        guifg=#3cfa04
-    hi NyanRainbow4        guifg=#fdfe00
-    hi NyanRainbow5        guifg=#fc9d00
-    hi NyanRainbow6        guifg=#fe0000
-
-
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl None
-    echo ""
-
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl NyanFur
-    echon "╰"
-    echohl NyanPoptartEdge
-    echon "⟨"
-    echohl NyanPoptartFrosting
-    echon "⣮⣯⡿"
-    echohl NyanPoptartEdge
-    echon "⟩"
-    echohl NyanFur
-    echon "⩾^ω^⩽"
-    echohl None
-    echo ""
-
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl NyanRainbow1
-    echon "≈"
-    echohl NyanRainbow2
-    echon "≋"
-    echohl NyanRainbow3
-    echon "≈"
-    echohl NyanRainbow4
-    echon "≋"
-    echohl NyanRainbow5
-    echon "≈"
-    echohl NyanRainbow6
-    echon "≋"
-    echohl None
-    echon " "
-    echohl NyanFur
-    echon "”   ‟"
-    echohl None
-
-    sleep 1
-    redraw
-    echo " "
-    echo " "
-    echo "Noms?"
-    redraw
-endfunction " }}}
-command! NyanMe call NyanMe()
+" Custom functions --------------------------------------------------------- {{{
 
 " }}}
 
-" Custom functions --------------------------------------------------------- {{{
-func! CleanUpPhpFormatting()
-    let save_cursor = getpos(".")
+" Color stuff ---------------------------------------------------------- {{{
 
-    " we use spaces in the Real World
-    retab
-    " add a space after every comma that doesn't have one
-    silent! %s/\v,([^ ])/, \1/
-    " add a space after every // that doesn't have one
-    silent! %s/\v\/\/([^ ])/\/\/ \1/
-    " fix the one-line functions to have the brace on the next line
-    silent! %s/\v^(\s+)(\w+) function (\w+) *\((.*)\) ?\{/\1\2 function \3(\4)\r\1{/
-    " add a space before the hash rocket
-    silent! %s/\v([^ ])\=\>/\1 =>/
-    " add a space after the hash rocket
-    silent! %s/\v\=\>([^ ])/=> \1/
-    " cleanup well structured ifs
-    silent! %s/\vif ?\((.*)\) ?\{/if (\1) {/
+"let &t_Co=256
+"let base16colorspace=256
+"colorscheme base16-google
+"set background=light
+let g:airline_theme = 'understated'
+let g:lightline = {
+      \ 'colorscheme': 'wombat',
+      \ 'component': {
+      \     'readonly': '%{&readonly?"":""}',
+      \     'modified': '%{&filetype=="help"?"":&modified?"+":&modifiable?"":"-"}'
+      \ },
+      \ 'component_visible_condition': {
+      \     'readonly': '(&filetype!="help"&& &readonly)',
+      \     'modified': '(&filetype!="help"&&(&modified||!&modifiable))'
+      \ },
+      \ 'component_function': {
+      \     'fugitive': 'FugitiveStatus',
+      \     'filename': 'MyFilename',
+      \     'fileformat': 'MyFileformat',
+      \     'filetype': 'MyFiletype',
+      \     'fileencoding': 'MyFileencoding',
+      \     'mode': 'MyMode',
+      \     'ctrlpmark': 'CtrlPMark',
+      \ },
+      \ 'active': {
+      \     'left': [ [ 'mode', 'paste' ], [ 'fugitive', 'filename' ], ['ctrlpmark'] ],
+      \     'right': [ [ 'syntastic', 'lineinfo' ], ['percent'], [ 'fileformat', 'fileencoding', 'filetype' ] ]
+      \ },
+      \ 'separator': { 'left': '', 'right': '' },
+      \ 'subseparator': { 'left': '', 'right': '' },
+      \ 'component_expand': {
+      \   'syntastic': 'SyntasticStatuslineFlag',
+      \ },
+      \ 'component_type': {
+      \   'syntastic': 'error',
+      \ } }
 
-    " remove old history
-    call histdel('search', -1)
-    call setpos('.', save_cursor)
-endfunc
+augroup AutoSyntastic
+    autocmd!
+    autocmd BufWritePost * call s:syntastic()
+augroup END
+
+function! s:syntastic()
+    SyntasticCheck
+    call lightline#update()
+endfunction
+
+function! MyModified()
+    return &ft =~ 'help' ? '' : &modified ? '+' : &modifiable ? '' : '-'
+endfunction
+
+function! MyReadonly()
+    return &ft !~? 'help' && &readonly ? 'RO' : ''
+endfunction
+
+function! MyFilename()
+    let fname = expand('%:t')
+    return fname == '__Tagbar__' ? g:lightline.fname :
+                \ fname =~ '__Gundo' ? '' :
+                \ &ft == 'vimfiler' ? vimfiler#get_status_string() :
+                \ &ft == 'unite' ? unite#get_status_string() :
+                \ &ft == 'vimshell' ? vimshell#get_status_string() :
+                \ ('' != MyReadonly() ? MyReadonly() . ' ' : '') .
+                \ ('' != fname ? fname : '[No Name]') .
+                \ ('' != MyModified() ? ' ' . MyModified() : '')
+endfunction
+
+function! MyFileformat()
+    return winwidth(0) > 70 ? &fileformat : ''
+endfunction
+
+function! MyFiletype()
+    return winwidth(0) > 70 ? (strlen(&filetype) ? &filetype : 'no ft') : ''
+endfunction
+
+function! MyFileencoding()
+    return winwidth(0) > 70 ? (strlen(&fenc) ? &fenc : &enc) : ''
+endfunction
+
+function! MyMode()
+    let fname = expand('%:t')
+    return fname == '__Tagbar__' ? 'Tagbar' :
+                \ fname == '__Gundo__' ? 'Gundo' :
+                \ fname == '__Gundo_Preview__' ? 'Gundo Preview' :
+                \ &ft == 'unite' ? 'Unite' :
+                \ &ft == 'vimfiler' ? 'VimFiler' :
+                \ &ft == 'vimshell' ? 'VimShell' :
+                \ winwidth(0) > 60 ? lightline#mode() : ''
+endfunction
+
+
+function! FugitiveStatus()
+    try
+        if expand('%:t') !~? 'Tagbar\|Gundo' && &ft !~? 'vimfiler' && exists('*fugitive#head')
+            let mark = ''  " edit here for cool mark
+            let _ = fugitive#head()
+            return strlen(_) ? mark._ : ''
+        endif
+    catch
+
+    endtry
+
+    return ''
+endfunction
+
+let g:tagbar_status_func = 'TagbarStatusFunc'
+
+function! TagbarStatusFunc(current, sort, fname, ...) abort
+    let g:lightline.fname = a:fname
+    return lightline#statusline(0)
+endfunction
 
 " }}}
 

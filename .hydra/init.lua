@@ -10,7 +10,7 @@
 --[[----------------------------------------------------------------------------
 -- Initialization
 --]]----------------------------------------------------------------------------
-hydra.alert("Hydra loaded", 1.0)
+hydra.dockicon.hide()
 
 --[[----------------------------------------------------------------------------
 -- Window management helper functions (namespaced to h)
@@ -152,11 +152,11 @@ end
 
 -- check for any updates and set "last_checked" time
 local function check_for_updates()
-    updates.check()
-    settings.set("last_checked_for_updates", os.time())
+    hydra.updates.check()
+    hydra.settings.set("last_checked_for_updates", os.time())
 end
 
-local last_checked_for_updates = settings.get('last_checked_for_updates')
+local last_checked_for_updates = hydra.settings.get('last_checked_for_updates')
 local last_week = os.time() - timer.days(7)
 
 -- if we haven't checked in a while (1 week) let's check now
@@ -169,8 +169,8 @@ end
 --]]----------------------------------------------------------------------------
 local function navbar_menu()
     local titles = {[true] = "Install Update", [false] = "Check for Update..."}
-    local funcs = {[true] = updates.install, [false] = check_for_updates}
-    local has_updates = (updates.newversion ~= nil)
+    local funcs = {[true] = hydra.updates.install, [false] = check_for_updates}
+    local has_updates = (hydra.updates.newversion ~= nil)
 
     return {
         {title = "Reload Config", fn = hydra.reload},
@@ -184,8 +184,8 @@ end
 --[[----------------------------------------------------------------------------
 -- Lua exports (global vars and stuff)
 --]]----------------------------------------------------------------------------
-autolaunch.set(true)
-updates.available = handle_update_check
-menu.show(navbar_menu)
+hydra.autolaunch.set(true)
+hydra.updates.available = handle_update_check
+hydra.menu.show(navbar_menu)
 timer.new(timer.weeks(1), check_for_updates):start()
 notify.register("show_update", show_update)

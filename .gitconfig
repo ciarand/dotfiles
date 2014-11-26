@@ -27,6 +27,7 @@
     nws = !sh -c 'git diff -w --no-color "$@" | git apply --cached --ignore-whitespace' -
     hash = rev-parse --short HEAD
     lg = log --color --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+    tree = log --all --graph --decorate --oneline --simplify-by-decoration
 
 [color]
     diff = auto

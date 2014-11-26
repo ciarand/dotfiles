@@ -1,0 +1,73 @@
+[user]
+	email = me@ciarand.me
+	name = Ciaran Downey
+	signingkey = 73D49D5D
+[core]
+	autocrlf = input
+	whitespace = trailing-space,space-before-tab
+[github]
+	user = ciarand
+[alias]
+	aa = add --all
+	ap = add --patch
+	ca = commit --amend
+	ci = commit -vS
+	co = checkout
+	ps = push
+	pl = pull --ff-only
+    credit = commit --amend --author "$1 <$2>" -C HEAD
+    count = shortlog -sn
+	sync = !git pl && git ps
+    curs = !git pl && git ps origin `git curb`
+    curb = rev-parse --abbrev-ref HEAD
+    check = fetch --all
+	create-branch = !sh -c 'git push origin HEAD:refs/heads/$1 && git fetch origin && git branch --track $1 origin/$1 && cd . && git checkout $1' -
+	delete-branch = !sh -c 'git push origin :refs/heads/$1 && git remote prune origin && git branch -D $1' -
+	merge-branch = !git checkout master && git merge @{-1}
+	pr = !hub pull-request
+	st = status
+	up = !git fetch origin && git rebase origin/master
+	br = branch
+	undo = reset --soft HEAD^
+	hist = log --pretty=format:'%h %ad | %s%d [%an]' --graph --date=short
+  type = cat-file -t
+  dump = cat-file -p
+  both = diff HEAD
+  oneline = log --pretty=oneline
+  shortlog = log --pretty=format:'%Cblue %H %Creset %Cred [%aN] %Creset %s'
+  invoice = !git log --all --before={`date \"+%Y-%m-%d\"`} --after={`date -v-2w \"+%Y-%m-%d\"`} --author=\"`git config user.name`\" --reverse --pretty=format:\"(%cd) – %s%n%n%b%n---%n\" --date=short
+  root = rev-parse --show-toplevel
+  magic = !git stash -u && git stash pop
+
+[color]
+	ui = auto
+[hub]
+	protocol = https
+[push]
+	default = tracking
+[color]
+	ui = auto
+[include]
+	path = .gitconfig.local
+[diff]
+	renames = copies
+	mnemonicprefix = true
+	tool = Kaleidoscope
+[branch]
+	autosetupmerge = true
+[rerere]
+	enabled = true
+[merge]
+	stat = true
+	tool = Kaleidoscope
+[difftool]
+	prompt = false
+[include]
+  path = .gitconfig.local
+[difftool "Kaleidoscope"]
+	cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+[mergetool "Kaleidoscope"]
+	cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+	trustExitCode = true
+[mergetool]
+	prompt = false
